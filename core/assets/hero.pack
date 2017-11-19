@@ -1,0 +1,19 @@
+hero.png
+size: 11, 46
+format: RGBA8888
+filter: Nearest,Nearest
+repeat: none
+hero
+  rotate: false
+  xy: 0, 0
+  size: 11, 23
+  orig: 11, 23
+  offset: 0, 0
+  index: 0
+hero
+  rotate: false
+  xy: 0, 23
+  size: 11, 23
+  orig: 11, 23
+  offset: 0, 0
+  index: 1

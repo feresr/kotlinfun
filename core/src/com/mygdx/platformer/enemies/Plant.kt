@@ -38,9 +38,7 @@ class Plant(x: Float, y: Float, world: (Entity) -> Unit) {
     }
 
     private fun onCollision(any: Any?) {
-        if (any is Hero) {
-            any.kill()
-        }
+        ((any as? Entity)?.userData as? Hero)?.kill()
     }
 
     private fun update(delta: Float) {

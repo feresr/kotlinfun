@@ -31,16 +31,15 @@ class World(private val tiles: TiledMapTileLayer) {
         val targetTileIndexX = (targetFacingX / TILESIZE).toInt()
 
         if (entity.velocity.x > 0) {
+            //RIGHT
             for (x in tileIndexX..targetTileIndexX) {
                 for (y in fromTileIndexY..toTileIndexY) {
                     val tile = tiles.getCell(x, y)?.tile
                     if (tile != null) {
                         if (TILESIZE * x.toFloat() <= targetFacingX) {
                             entity.position.x = TILESIZE * x.toFloat() - entity.width
-
-                            //Gdx.app.log("collision", "right of enemy")
                             entity.velocity.x = 0f
-                            entity.onCollisionRight?.invoke()
+                            entity.onCollisionRight?.invoke(null)
                         } else {
                             entity.position.x = entity.position.x + entity.velocity.x
                         }
@@ -50,6 +49,7 @@ class World(private val tiles: TiledMapTileLayer) {
                 }
             }
         } else {
+            //LEFT
             for (x in tileIndexX.downTo(targetTileIndexX)) {
                 for (y in fromTileIndexY..toTileIndexY) {
                     val tile = tiles.getCell(x, y)?.tile
@@ -59,7 +59,7 @@ class World(private val tiles: TiledMapTileLayer) {
                             entity.position.x = TILESIZE * x.toFloat() + TILESIZE
                             //Gdx.app.log("collision", "left of enemy")
                             entity.velocity.x = 0f
-                            entity.onCollisionLeft?.invoke()
+                            entity.onCollisionLeft?.invoke(null)
                         } else {
                             entity.position.x = entity.position.x + entity.velocity.x
                         }
@@ -93,7 +93,7 @@ class World(private val tiles: TiledMapTileLayer) {
                         if (TILESIZE * y.toFloat() <= targetFacingY) {
                             entity.position.y = TILESIZE * y.toFloat() - entity.height
                             entity.velocity.y = 0f
-                            entity.onCollisionTop?.invoke()
+                            entity.onCollisionTop?.invoke(null)
                         } else {
                             entity.position.y = entity.position.y + entity.velocity.y
                         }
@@ -111,7 +111,7 @@ class World(private val tiles: TiledMapTileLayer) {
                         if (TILESIZE * y.toFloat() + TILESIZE >= targetFacingY) {
                             entity.position.y = TILESIZE * y.toFloat() + TILESIZE
                             entity.velocity.y = 0f
-                            entity.onCollisionBottom?.invoke()
+                            entity.onCollisionBottom?.invoke(null)
                         } else {
                             entity.position.y = entity.position.y + entity.velocity.y
                         }
@@ -126,20 +126,25 @@ class World(private val tiles: TiledMapTileLayer) {
     }
 
     val GRAVITY = .5f
+    val MAX_FALL_SPEED = 12f
+
 
     fun step(delta: Float) {
         entities.filter { it.isActive }
                 .forEach { it.onUpdate?.invoke(delta) }
 
+        //Tiles collisions
         for (entity in entities) {
             if (entity.isActive) {
-                entity.velocity.y -= entity.gravity * GRAVITY
-
+                if (entity.velocity.y > -MAX_FALL_SPEED) {
+                    entity.velocity.y -= entity.gravity * GRAVITY
+                }
                 if (entity.velocity.x != 0f) stepX(entity)
                 if (entity.velocity.y != 0f) stepY(entity)
             }
         }
 
+        //Triggers
         //the order of the collisions matters here, it is recommended for the player
         //to be checked first. When jumping on top of a goomba it will set its entity as not 'active
         //and the goomba check wont't be performed preventing hurting the player
@@ -151,6 +156,62 @@ class World(private val tiles: TiledMapTileLayer) {
                             .filter { it.isActive && it != entity }
                             .forEach { checkCollisions(entity, it) }
                 }
+
+        //AABB collisions
+        entities.asSequence()
+                .filter { it.isActive && (it.velocity.len2() > 0f) }
+                .forEach { entity ->
+                    entities.asSequence()
+                            .filter { other -> other.isActive && other != entity }
+                            .forEach { other ->
+                                val rect1 = Rectangle(entity.position.x, entity.position.y, entity.width.toFloat(), entity.height.toFloat())
+                                val rect2 = Rectangle(other.position.x, other.position.y, other.width.toFloat(), other.height.toFloat())
+
+                                val A: Rectangle = rect1
+                                val B: Rectangle = rect2
+
+                                //if (A.overlaps(B)) {
+                                val w = .5 * (A.width + B.width)
+                                val h = .5 * (A.height + B.height)
+                                val dx = (A.x + A.width / 2f) - (B.x + B.width / 2f)
+                                val dy = (A.y + A.height / 2f) - (B.y + B.height / 2f)
+
+                                if (Math.abs(dx) <= w && Math.abs(dy) <= h) {
+                                    /* collision! */
+
+                                    entity.onCollision?.invoke(other)
+                                    other.onCollision?.invoke(entity)
+
+                                    val wy = w * dy
+                                    val hx = h * dx
+
+                                    if (wy > hx) {
+                                        if (wy > -hx) {
+                                            //Bottom
+                                            entity.onCollisionBottom?.invoke(other)
+                                            other.onCollisionTop?.invoke(entity)
+                                        } else {
+                                            //Right
+                                            entity.onCollisionRight?.invoke(other)
+                                            other.onCollisionLeft?.invoke(entity)
+                                        }
+                                    } else {
+                                        if (wy > -hx) {
+                                            //Left
+                                            entity.onCollisionLeft?.invoke(other)
+                                            other.onCollisionRight?.invoke(entity)
+                                        } else {
+                                            //Top
+                                            entity.onCollisionTop?.invoke(other)
+                                            other.onCollisionBottom?.invoke(entity)
+                                        }
+                                    }
+                                }
+                                //}
+                            }
+                }
+
+
     }
 
     private fun checkCollisions(entity: Entity, other: Entity) {
@@ -158,8 +219,7 @@ class World(private val tiles: TiledMapTileLayer) {
             val rec2 = Rectangle(other.position.x, other.position.y, other.width.toFloat(), other.height.toFloat())
             for (sensor in entity.sensors) {
                 if (rec2.overlaps(Rectangle(entity.position.x + sensor.rectangle.x, entity.position.y + sensor.rectangle.y, sensor.rectangle.width, sensor.rectangle.height))) {
-                    sensor.f(other.userData)
-                    return
+                    sensor.f(other)
                 }
             }
         }
@@ -170,6 +230,9 @@ class World(private val tiles: TiledMapTileLayer) {
         shapeRenderer.projectionMatrix = pm
 
         for (entity in entities) {
+
+            if (!entity.isVisible) continue
+
             shapeRenderer.setColor(1f, 0f, 0f, 1f);
             shapeRenderer.rect(entity.position.x,
                     entity.position.y,

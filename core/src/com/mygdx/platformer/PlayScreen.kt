@@ -12,6 +12,7 @@ import com.badlogic.gdx.utils.Array
 import com.badlogic.gdx.utils.viewport.FitViewport
 import com.mygdx.platformer.enemies.Enemy
 import com.mygdx.platformer.enemies.Plant
+import com.mygdx.platformer.engine.Entity
 import com.mygdx.platformer.engine.World
 
 
@@ -24,15 +25,16 @@ class PlayScreen(private val game: Platformer, val mapName: String) : Screen {
     private val viewport = FitViewport(Platformer.V_WIDTH, Platformer.V_HEIGHT, camera)
 
     private var currentLevel = mapName
+    private var isHeroDead = false
 
     private val map = TmxMapLoader().load(mapName)
     private val renderer = OrthogonalTiledMapRenderer(map, 1f)
 
     private val world: World = World(map.layers[1] as TiledMapTileLayer)
 
-    private val hero: Hero = Hero(64f, 32f, { world.addEntity(it) }, this::onDoorSelected, this::onHeroDied)
+    private val hero: Hero = Hero(128f, 256f, { world.addEntity(it) }, this::onDoorSelected, { isHeroDead = true })
 
-    private val enemies: Array<Enemy> = Array()
+    private val entities: Array<Entity> = Array()
 
     override fun show() {
         createWorldObjects()
@@ -41,15 +43,24 @@ class PlayScreen(private val game: Platformer, val mapName: String) : Screen {
 
     private fun createWorldObjects() {
 
+        //Enemies
+        for (o in map.layers[3].objects.getByType(RectangleMapObject::class.java)) {
+            entities.add(Enemy(o.rectangle.x, o.rectangle.y, { world.addEntity(it) }).body)
+        }
+
+        //Plants
         for (o in map.layers[4].objects.getByType(RectangleMapObject::class.java)) {
             Plant(o.rectangle.x + o.rectangle.width / 2, o.rectangle.y, { world.addEntity(it) })
         }
+
+        //Doors
         for (o in map.layers[5].objects.getByType(RectangleMapObject::class.java)) {
             Door(o.rectangle.x, o.rectangle.y, { world.addEntity(it) }, o.properties["level"].toString())
         }
 
-        for (o in map.layers[3].objects.getByType(RectangleMapObject::class.java)) {
-            enemies.add(Enemy(o.rectangle.x, o.rectangle.y, { world.addEntity(it) }))
+        //Boxes
+        for (o in map.layers[6].objects.getByType(RectangleMapObject::class.java)) {
+            entities.add(Box(o.rectangle.x, o.rectangle.y, o.rectangle.width.toInt(), o.rectangle.height.toInt(), { world.addEntity(it) }).body)
         }
     }
 
@@ -57,13 +68,11 @@ class PlayScreen(private val game: Platformer, val mapName: String) : Screen {
         currentLevel = door.level
     }
 
-    private fun onHeroDied() {
-        currentLevel = if (currentLevel =="map.tmx") "map2.tmx" else "map.tmx"
-    }
-
-
     override fun render(delta: Float) {
-        if (currentLevel != mapName) {
+        if (currentLevel != mapName || isHeroDead) {
+            if (currentLevel == mapName) {
+                currentLevel = if (currentLevel == "map.tmx") "map2.tmx" else "map.tmx"
+            }
             game.screen = PlayScreen(game, currentLevel)
             dispose()
             return
@@ -77,7 +86,7 @@ class PlayScreen(private val game: Platformer, val mapName: String) : Screen {
         //camera.position.x = hero.body.position.x
         //camera.position.y = hero.body.position.y + 80
 
-        val lerpX = 5f
+        val lerpX = 20f
         val lerpY = 3f
         val cameraYOffset = 30
         camera.position.x += (hero.body.position.x - camera.position.x) * lerpX * delta
@@ -87,27 +96,44 @@ class PlayScreen(private val game: Platformer, val mapName: String) : Screen {
         game.batch.projectionMatrix = camera.combined
         world.render(camera.combined)
 
-        //shapeRenderer.projectionMatrix =
-
         renderer.setView(camera)
         renderer.render()
+
+        game.batch.begin()
+        hero.draw(game.batch)
+        for (entity in entities) {
+            //EVERYTHING MUST HAVE A TEXTURE TO BE DRAWN! ELSE NullPointerException
+            //(entity.userData as? Sprite)?.draw(game.batch)
+        }
+        game.batch.end()
+
     }
 
     private fun update(delta: Float) {
-        world.step(delta)
-        for (enemy in enemies) {
-            if (enemy.position.x - hero.body.position.x < (Platformer.V_WIDTH / 2) + Platformer.ENEMY_WAKE_THRESHOLD) {
-                if (!enemy.isDead) {
-                    enemy.setActive(true)
+
+        for (entity in entities) {
+            entity.userData?.let {
+                when (it) {
+                    is Enemy -> {
+                        if (entity.position.x - hero.body.position.x < (Platformer.V_WIDTH / 2) + Platformer.ENEMY_WAKE_THRESHOLD) {
+                            if (!it.isDead) {
+                                it.setActive(true)
+                            }
+                        }
+                    }
                 }
             }
-            //if (enemy.isDead) {
-            //world.destroyBody(enemy.body)
-            //    enemies.removeValue(enemy, true)
-            //} else {
-            //enemy.update(delta)
-            //}
+
+            if (entity.position.y < 0) {
+                entity.isActive = false
+            }
         }
+
+        if (hero.body.position.y < 0f) {
+            isHeroDead = true
+        }
+
+        world.step(delta)
     }
 
     override fun pause() {
