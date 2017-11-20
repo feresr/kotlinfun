@@ -1,19 +1,19 @@
-package com.mygdx.platformer
+package com.mygdx.platformer.items
 
 import com.badlogic.gdx.Gdx
 import com.badlogic.gdx.Input
 import com.badlogic.gdx.graphics.g2d.Sprite
 import com.badlogic.gdx.math.Vector2
+import com.mygdx.platformer.Hero
 import com.mygdx.platformer.engine.Entity
 
-class Box(x: Float, y: Float, width: Int, height: Int, world: (Entity) -> Unit) : Sprite() {
+class Box(x: Float, y: Float, width: Int, height: Int) : Sprite() {
 
     val body: Entity = Entity(Vector2(x, y), width, height)
     private var beingPushedFromRight = false
     private var beingPushedFromLeft = false
 
     init {
-        body.isActive = true
         body.userData = this
 
         body.onCollisionLeft = { other ->
@@ -75,8 +75,6 @@ class Box(x: Float, y: Float, width: Int, height: Int, world: (Entity) -> Unit) 
             beingPushedFromLeft = false
             beingPushedFromRight = false
         }
-
-        world(body)
     }
 
     companion object {

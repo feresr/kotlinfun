@@ -20,6 +20,6 @@ class Platformer : Game() {
         const val V_HEIGHT = 300f
         const val GRAVITY = 10f
         const val PPM = 100f
-        const val ENEMY_WAKE_THRESHOLD: Float = 10f
+        const val AWAKE_THRESHOLD: Float = 10f
     }
 }

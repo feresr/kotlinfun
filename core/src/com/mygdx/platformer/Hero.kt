@@ -2,12 +2,16 @@ package com.mygdx.platformer
 
 import com.badlogic.gdx.Gdx
 import com.badlogic.gdx.Input
+import com.badlogic.gdx.graphics.Texture
 import com.badlogic.gdx.graphics.g2d.*
 import com.badlogic.gdx.math.Rectangle
 import com.badlogic.gdx.math.Vector2
 import com.mygdx.platformer.enemies.Enemy
 import com.mygdx.platformer.engine.Entity
 import com.mygdx.platformer.engine.Sensor
+import com.mygdx.platformer.items.Box
+import com.mygdx.platformer.items.Coin
+import com.mygdx.platformer.items.Door
 
 class Hero(x: Float, y: Float, world: (Entity) -> Unit,
            private val onDoorEntered: (Door) -> Unit,
@@ -18,25 +22,46 @@ class Hero(x: Float, y: Float, world: (Entity) -> Unit,
     private var facingRight = true
 
     private val idleAnimation: Animation<TextureRegion>
+    private val runAnimation: Animation<TextureRegion>
+    private val jumpTexture: TextureRegion = TextureRegion(Texture("hero_jump.png"))
+    private val fallTexture: TextureRegion = TextureRegion(Texture("hero_fall.png"))
+
     private var timer = 0f
+    private var currentTexture: TextureRegion
 
     init {
-        setBounds(x, y, 11f, 23f)
 
-        val feetSensor = Sensor(Rectangle(1f, -2f, 9f, 4f), this::onHeroStepsOn)
+        val feetSensor = Sensor(Rectangle(1f, -2f, 9f, 4f), {})
         val bodySensor = Sensor(Rectangle(0f, 0f, 11f, 23f), this::onBodySensor)
         body = Entity(Vector2(x, y), 11, 23, arrayOf(feetSensor, bodySensor))
 
         body.onUpdate = this::update
 
-        val frames = com.badlogic.gdx.utils.Array<TextureRegion>(2)
-        val ta = TextureAtlas("hero.pack")
+        //HeroAnimation
+        var frames = com.badlogic.gdx.utils.Array<TextureRegion>(2)
+        var ta = TextureAtlas("hero.pack")
         frames.add(TextureRegion(ta.findRegion("hero"), 0, 0, 11, 23))
         frames.add(TextureRegion(ta.findRegion("hero"), 0, 23, 11, 23))
         idleAnimation = Animation(.4f, frames, Animation.PlayMode.LOOP)
 
+        currentTexture = idleAnimation.getKeyFrame(0f, true)
+
+        frames = com.badlogic.gdx.utils.Array(6)
+        ta = TextureAtlas("hero_run.pack")
+        frames.add(TextureRegion(ta.findRegion("hero_run0")))
+        frames.add(TextureRegion(ta.findRegion("hero_run1")))
+        frames.add(TextureRegion(ta.findRegion("hero_run2")))
+        frames.add(TextureRegion(ta.findRegion("hero_run3")))
+        frames.add(TextureRegion(ta.findRegion("hero_run4")))
+        frames.add(TextureRegion(ta.findRegion("hero_run1")))
+        runAnimation = Animation(.1f, frames, Animation.PlayMode.LOOP)
+
+
         body.onCollisionBottom = { other ->
             canJump = true
+
+            onHeroStepsOn(other)
+
             other?.let {
                 if (other is Entity) {
                     when (other.userData) {
@@ -71,8 +96,12 @@ class Hero(x: Float, y: Float, world: (Entity) -> Unit,
             }
         }
 
+        body.onCollision = { other ->
+            ((other as? Entity)?.userData as? Coin)?.collect()
+        }
+
         body.userData = this
-        body.isActive = true
+        //body.isActive = true
         world(body)
     }
 
@@ -89,7 +118,7 @@ class Hero(x: Float, y: Float, world: (Entity) -> Unit,
         body.velocity.x = -Hero.SPEED
     }
 
-    fun update(delta: Float) {
+    private fun update(delta: Float) {
         //body.linearVelocity = vector.set(0f, body.linearVelocity.y)
 
         timer += delta
@@ -111,19 +140,34 @@ class Hero(x: Float, y: Float, world: (Entity) -> Unit,
 
             if (Gdx.input.isKeyJustPressed(Input.Keys.UP)) {
                 jump()
+
             }
 
             if (Gdx.input.isKeyPressed(Input.Keys.LEFT)) {
                 moveLeft()
             }
+
+            currentTexture = if (Math.abs(body.velocity.x) > 0f) {
+                runAnimation.getKeyFrame(timer, true)
+            } else {
+                idleAnimation.getKeyFrame(timer, true)
+            }
+
+            if (Math.abs(body.velocity.y) > 0f || !canJump) {
+                currentTexture = if (body.velocity.y > 0f) {
+                    jumpTexture
+                } else {
+                    fallTexture
+                }
+
+            }
         }
-
-
     }
 
     override fun draw(batch: Batch?) {
         setPosition(body.position.x, body.position.y)
-        batch?.draw(idleAnimation.getKeyFrame(timer, true), if (!facingRight) x + width else x, y, if (!facingRight) -width else width, height);
+        setBounds(x, y, currentTexture.regionWidth.toFloat(), currentTexture.regionHeight.toFloat())
+        batch?.draw(currentTexture, if (!facingRight) x + width - (currentTexture.regionWidth - body.width) / 2 else x - (currentTexture.regionWidth - body.width) / 2, y, if (!facingRight) -width else width, height);
     }
 
     private fun shadow() {
@@ -180,7 +224,7 @@ class Hero(x: Float, y: Float, world: (Entity) -> Unit,
     }
 
     companion object {
-        const val SPEED = 2f
-        const val JUMP_SPEED = 10f
+        const val SPEED = 1.5f
+        const val JUMP_SPEED = 8f
     }
 }

@@ -10,7 +10,7 @@ import com.mygdx.platformer.engine.Sensor
 /**
  * Created by feresr on 14/11/17.
  */
-class Plant(x: Float, y: Float, world: (Entity) -> Unit) {
+class Plant(x: Float, y: Float) {
 
     private val plantHeight: Float = 30f
     private val plantWidth: Float = 12f
@@ -25,16 +25,14 @@ class Plant(x: Float, y: Float, world: (Entity) -> Unit) {
 
     private enum class State { UP, GROWING, DOWN, HIDING }
 
-    private val body: Entity
+    val body: Entity
     private var state: State = State.DOWN
 
     init {
         val sensor = Sensor(Rectangle(0f, -plantHeight, plantWidth, plantHeight), this::onCollision)
         body = Entity(Vector2(x - plantWidth / 2, y), 0, 0, arrayOf(sensor))
         body.onUpdate = this::update
-        body.isActive = true
         body.gravity = 0f
-        world(body)
     }
 
     private fun onCollision(any: Any?) {

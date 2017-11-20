@@ -14,12 +14,14 @@ import com.mygdx.platformer.enemies.Enemy
 import com.mygdx.platformer.enemies.Plant
 import com.mygdx.platformer.engine.Entity
 import com.mygdx.platformer.engine.World
-
+import com.mygdx.platformer.items.Box
+import com.mygdx.platformer.items.Coin
+import com.mygdx.platformer.items.Door
 
 /**
  * Created by feresr on 11/11/17.
  */
-class PlayScreen(private val game: Platformer, val mapName: String) : Screen {
+class PlayScreen(private val game: Platformer, private val mapName: String) : Screen {
 
     private val camera = OrthographicCamera()
     private val viewport = FitViewport(Platformer.V_WIDTH, Platformer.V_HEIGHT, camera)
@@ -30,42 +32,68 @@ class PlayScreen(private val game: Platformer, val mapName: String) : Screen {
     private val map = TmxMapLoader().load(mapName)
     private val renderer = OrthogonalTiledMapRenderer(map, 1f)
 
-    private val world: World = World(map.layers[1] as TiledMapTileLayer)
+    private val world: World = World(map.layers[1] as TiledMapTileLayer, .5f)
 
     private val hero: Hero = Hero(128f, 256f, { world.addEntity(it) }, this::onDoorSelected, { isHeroDead = true })
 
     private val entities: Array<Entity> = Array()
+
 
     override fun show() {
         createWorldObjects()
         camera.position.y = viewport.worldHeight / 2f
     }
 
+    private fun removeEntity(entity: Entity) {
+        world.removeEntity(entity)
+        entities.removeValue(entity, true)
+    }
+
     private fun createWorldObjects() {
+
+        entities.add(Coin(32f, 32f, { removeEntity(it) }).body)
 
         //Enemies
         for (o in map.layers[3].objects.getByType(RectangleMapObject::class.java)) {
-            entities.add(Enemy(o.rectangle.x, o.rectangle.y, { world.addEntity(it) }).body)
+            entities.add(Enemy(o.rectangle.x, o.rectangle.y, this::removeEntity).body)
         }
 
         //Plants
         for (o in map.layers[4].objects.getByType(RectangleMapObject::class.java)) {
-            Plant(o.rectangle.x + o.rectangle.width / 2, o.rectangle.y, { world.addEntity(it) })
+            entities.add(Plant(o.rectangle.x + o.rectangle.width / 2, o.rectangle.y).body)
         }
 
         //Doors
         for (o in map.layers[5].objects.getByType(RectangleMapObject::class.java)) {
-            Door(o.rectangle.x, o.rectangle.y, { world.addEntity(it) }, o.properties["level"].toString())
+            entities.add(Door(o.rectangle.x, o.rectangle.y, o.properties["level"].toString()).body)
         }
 
         //Boxes
         for (o in map.layers[6].objects.getByType(RectangleMapObject::class.java)) {
-            entities.add(Box(o.rectangle.x, o.rectangle.y, o.rectangle.width.toInt(), o.rectangle.height.toInt(), { world.addEntity(it) }).body)
+            entities.add(Box(o.rectangle.x, o.rectangle.y, o.rectangle.width.toInt(), o.rectangle.height.toInt()).body)
         }
     }
 
     private fun onDoorSelected(door: Door) {
         currentLevel = door.level
+    }
+
+    private fun update(delta: Float) {
+
+        entities.forEach {
+            if (!it.isInWorld && it.position.x - hero.body.position.x < (Platformer.V_WIDTH / 2) + Platformer.AWAKE_THRESHOLD) {
+                it.isInWorld = true
+                world.addEntity(it)
+            }
+            it.onUpdate?.invoke(delta)
+        }
+
+        hero.body.onUpdate?.invoke(delta)
+        if (hero.body.position.y < 0f) {
+            isHeroDead = true
+        }
+
+        world.step(delta)
     }
 
     override fun render(delta: Float) {
@@ -87,7 +115,7 @@ class PlayScreen(private val game: Platformer, val mapName: String) : Screen {
         //camera.position.y = hero.body.position.y + 80
 
         val lerpX = 20f
-        val lerpY = 3f
+        val lerpY = 22f
         val cameraYOffset = 30
         camera.position.x += (hero.body.position.x - camera.position.x) * lerpX * delta
         camera.position.y += (hero.body.position.y - camera.position.y + cameraYOffset) * lerpY * delta
@@ -105,48 +133,16 @@ class PlayScreen(private val game: Platformer, val mapName: String) : Screen {
             //EVERYTHING MUST HAVE A TEXTURE TO BE DRAWN! ELSE NullPointerException
             //(entity.userData as? Sprite)?.draw(game.batch)
         }
+
         game.batch.end()
 
     }
 
-    private fun update(delta: Float) {
+    override fun pause() {}
 
-        for (entity in entities) {
-            entity.userData?.let {
-                when (it) {
-                    is Enemy -> {
-                        if (entity.position.x - hero.body.position.x < (Platformer.V_WIDTH / 2) + Platformer.ENEMY_WAKE_THRESHOLD) {
-                            if (!it.isDead) {
-                                it.setActive(true)
-                            }
-                        }
-                    }
-                }
-            }
+    override fun resume() {}
 
-            if (entity.position.y < 0) {
-                entity.isActive = false
-            }
-        }
-
-        if (hero.body.position.y < 0f) {
-            isHeroDead = true
-        }
-
-        world.step(delta)
-    }
-
-    override fun pause() {
-
-    }
-
-    override fun resume() {
-
-    }
-
-    override fun hide() {
-
-    }
+    override fun hide() {}
 
     override fun resize(width: Int, height: Int) {
         viewport.update(width, height)
