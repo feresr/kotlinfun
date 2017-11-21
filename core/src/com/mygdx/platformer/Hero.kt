@@ -54,7 +54,7 @@ class Hero(x: Float, y: Float, world: (Entity) -> Unit,
         frames.add(TextureRegion(ta.findRegion("hero_run3")))
         frames.add(TextureRegion(ta.findRegion("hero_run4")))
         frames.add(TextureRegion(ta.findRegion("hero_run1")))
-        runAnimation = Animation(.1f, frames, Animation.PlayMode.LOOP)
+        runAnimation = Animation(.125f, frames, Animation.PlayMode.LOOP)
 
 
         body.onCollisionBottom = { other ->
@@ -165,9 +165,11 @@ class Hero(x: Float, y: Float, world: (Entity) -> Unit,
     }
 
     override fun draw(batch: Batch?) {
-        setPosition(body.position.x, body.position.y)
-        setBounds(x, y, currentTexture.regionWidth.toFloat(), currentTexture.regionHeight.toFloat())
-        batch?.draw(currentTexture, if (!facingRight) x + width - (currentTexture.regionWidth - body.width) / 2 else x - (currentTexture.regionWidth - body.width) / 2, y, if (!facingRight) -width else width, height);
+        if (body.isVisible) {
+            setPosition(body.position.x, body.position.y)
+            setBounds(x, y, currentTexture.regionWidth.toFloat(), currentTexture.regionHeight.toFloat())
+            batch?.draw(currentTexture, if (!facingRight) x + width - (currentTexture.regionWidth - body.width) / 2f else x - (currentTexture.regionWidth - body.width) / 2f, y, if (!facingRight) -width else width, height)
+        }
     }
 
     private fun shadow() {
@@ -225,6 +227,6 @@ class Hero(x: Float, y: Float, world: (Entity) -> Unit,
 
     companion object {
         const val SPEED = 1.5f
-        const val JUMP_SPEED = 8f
+        const val JUMP_SPEED = 7f
     }
 }

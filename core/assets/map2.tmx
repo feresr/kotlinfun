@@ -1,33 +1,100 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<map version="1.0" tiledversion="1.0.3" orientation="orthogonal" renderorder="right-down" width="240" height="13" tilewidth="16" tileheight="16" nextobjectid="8">
+<map version="1.0" tiledversion="1.0.3" orientation="orthogonal" renderorder="right-down" width="240" height="24" tilewidth="16" tileheight="16" nextobjectid="29">
  <tileset firstgid="1" source="tileset.tsx"/>
- <layer name="Background" width="240" height="13">
+ <tileset firstgid="925" source="tile.tsx"/>
+ <tileset firstgid="937" name="house" tilewidth="32" tileheight="48" tilecount="16" columns="0">
+  <grid orientation="orthogonal" width="1" height="1"/>
+  <tile id="0">
+   <image width="16" height="16" source="wallpaper.png"/>
+  </tile>
+  <tile id="1">
+   <image width="16" height="16" source="house_wall.png"/>
+  </tile>
+  <tile id="2">
+   <image width="16" height="16" source="house_floor.png"/>
+  </tile>
+  <tile id="3">
+   <image width="16" height="16" source="clock.png"/>
+  </tile>
+  <tile id="4">
+   <image width="16" height="16" source="repisa.png"/>
+  </tile>
+  <tile id="5">
+   <image width="16" height="16" source="books.png"/>
+  </tile>
+  <tile id="6">
+   <image width="16" height="16" source="cup.png"/>
+  </tile>
+  <tile id="7">
+   <image width="16" height="16" source="dark_wall.png"/>
+  </tile>
+  <tile id="8">
+   <image width="16" height="16" source="grill.png"/>
+  </tile>
+  <tile id="9">
+   <image width="16" height="16" source="house_wall_corner.png"/>
+  </tile>
+  <tile id="10">
+   <image width="16" height="16" source="wallpaper_2.png"/>
+  </tile>
+  <tile id="11">
+   <image width="16" height="16" source="wall_handle.png"/>
+  </tile>
+  <tile id="12">
+   <image width="16" height="16" source="wallpaper_3.png"/>
+  </tile>
+  <tile id="13">
+   <image width="16" height="16" source="wallpaper_4.png"/>
+  </tile>
+  <tile id="14">
+   <image width="16" height="16" source="flower.png"/>
+  </tile>
+  <tile id="15">
+   <image width="32" height="48" source="frame.png"/>
+  </tile>
+ </tileset>
+ <layer name="Background" width="240" height="24">
   <data encoding="base64" compression="zlib">
-   eJztwTEBAAAAwqD1T20KP6AAAAAAAAAAAAAAAAC+BjDAAAE=
+   eJzt2UEKgzAQQFEh9z+CNtsKhW7q+UowgRRaSEoWEd6DAdHR3ScLlwUAAAAAAAAAAABOR+gbYB76hXk8Q/sk+oV53EP7JPqFeegXrku/cF2lzUc1+oX59Zy9afbOdo/8DjDeP/2+Oke/MN6Wu+r5f9TbbhlgnJumoNkazvMudZOuY74u937NlvfX8NlceR6r3bL37Zux2tEuAACzegNhSK6b
   </data>
  </layer>
- <layer name="Solids" width="240" height="13">
+ <layer name="Solids" width="240" height="24">
   <data encoding="base64" compression="zlib">
-   eJzt0zEKwCAQRcG1TI5ijhHw/kcynW1QUBZmYGHL37wIAAAAAADIpf34AYB1V4m4y+kVwIz6tfvoF1LSL+zzJjtgON2jfmFeB3Q1GJ4=
+   eJztmm1ygjAQQHH4ZY/SXsqjqS0f0/rLE3C0kkraNA0hIYtE+t7MjiKbxXHy2AgUBQAAAAAAAADANO9lceijG16/Yu3vBADhKH+tbVwGeBBsf619uAywEINbx8BQ6+Sjo0YXcaxDaD4A+IlxaSw31kf8BfjLNa6XfvfU0Pr4C7AcvRdzxnSpufgLa1D3870dopox95cmtp9e8Rf+EcrbJkNvNbH99B7917yebF6PWmrNDjCG7r25kqO/EsfFX5AAf28uffTj7LBRn+Ev5ES1AX8vRs5S/Vf7jL+QE8rd+sH9TckfxnS+/a5enHpc/AUJcl8/b5UQf3neEqZo8HcV8BckkL7vu98VxdNOrp7rutK9YuQ+0Soh94vClpBePz/37r4I+Xsuf/6ft+Xv50xagbDrjkUzs37suLH8HJ+rgTzI1d/XRO+qAC+kfA+p7xo7dR4yxwC40HPkVN76nfLmbdjW783Qn588ubqWXe88MdbM0XPb50aKlyF+x/R5+znUlPOE6/sAuPA5UBvzMcYVM3dqLtv7Uzzw5YeulSWOFXuu8NXK/f48rMsnze3LlA==
   </data>
  </layer>
- <layer name="Foreground" width="240" height="13">
+ <layer name="Foreground" width="240" height="24">
   <data encoding="base64" compression="zlib">
-   eJztwTEBAAAAwqD1T20KP6AAAAAAAAAAAAAAAAC+BjDAAAE=
+   eJzt1jkKACEAA0DB/39FEQT3eWtnbeOBM5A+TSAhAAAAAAAAAAAAAACwUom7GwAAwFlS/8itJ/vK8JTP5uEKNc4FAAAAAACA4Qf6Fgwh
   </data>
  </layer>
  <objectgroup name="Walking">
-  <object id="4" x="576" y="128" width="16" height="16"/>
-  <object id="5" x="464" y="80" width="16" height="16"/>
-  <object id="7" x="288" y="144" width="16" height="16"/>
+  <object id="4" x="576" y="304" width="16" height="16"/>
+  <object id="5" x="464" y="256" width="16" height="16"/>
  </objectgroup>
  <objectgroup name="Plants"/>
  <objectgroup name="Doors">
-  <object id="1" x="336" y="112" width="16" height="16">
+  <object id="1" x="928" y="224" width="32" height="80">
    <properties>
     <property name="level" value="map.tmx"/>
    </properties>
   </object>
  </objectgroup>
- <objectgroup name="Boxes"/>
+ <objectgroup name="Boxes">
+  <object id="8" x="160" y="322" width="61" height="28"/>
+  <object id="10" x="192" y="272" width="16" height="16"/>
+  <object id="11" x="352" y="240" width="32" height="32"/>
+ </objectgroup>
+ <objectgroup name="Pills">
+  <object id="17" x="320" y="288" width="16" height="16"/>
+  <object id="18" x="336" y="288" width="16" height="16"/>
+  <object id="20" x="416" y="336" width="16" height="16"/>
+  <object id="21" x="448" y="336" width="16" height="16"/>
+  <object id="22" x="480" y="336" width="16" height="16"/>
+  <object id="23" x="784" y="208" width="16" height="16"/>
+  <object id="24" x="1072" y="208" width="16" height="16"/>
+  <object id="25" x="1408" y="288" width="16" height="16"/>
+  <object id="26" x="48" y="336" width="16" height="16"/>
+  <object id="28" x="80" y="336" width="16" height="16"/>
+ </objectgroup>
 </map>

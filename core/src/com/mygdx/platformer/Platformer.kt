@@ -8,7 +8,7 @@ class Platformer : Game() {
 
     override fun create() {
         batch = SpriteBatch()
-        setScreen(PlayScreen(this, "map.tmx"))
+        setScreen(PlayScreen(this, "map3.tmx"))
     }
 
     override fun dispose() {

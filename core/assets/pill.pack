@@ -1,0 +1,19 @@
+pill.png
+size: 22, 12
+format: RGBA8888
+filter: MipMapLinearNearest,Nearest
+repeat: none
+pill
+  rotate: false
+  xy: 0, 0
+  size: 11, 12
+  orig: 11, 12
+  offset: 0, 0
+  index: 0
+pill
+  rotate: false
+  xy: 11, 0
+  size: 11, 12
+  orig: 11, 12
+  offset: 0, 0
+  index: 1

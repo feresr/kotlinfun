@@ -30,7 +30,7 @@ class PlayScreen(private val game: Platformer, private val mapName: String) : Sc
     private var isHeroDead = false
 
     private val map = TmxMapLoader().load(mapName)
-    private val renderer = OrthogonalTiledMapRenderer(map, 1f)
+    private val renderer = OrthogonalTiledMapRenderer(map, game.batch)
 
     private val world: World = World(map.layers[1] as TiledMapTileLayer, .5f)
 
@@ -38,10 +38,10 @@ class PlayScreen(private val game: Platformer, private val mapName: String) : Sc
 
     private val entities: Array<Entity> = Array()
 
-
     override fun show() {
         createWorldObjects()
         camera.position.y = viewport.worldHeight / 2f
+        camera.zoom = .7f
     }
 
     private fun removeEntity(entity: Entity) {
@@ -51,14 +51,16 @@ class PlayScreen(private val game: Platformer, private val mapName: String) : Sc
 
     private fun createWorldObjects() {
 
-        entities.add(Coin(32f, 32f, { removeEntity(it) }).body)
+        for (o in map.layers[7].objects.getByType(RectangleMapObject::class.java)) {
+            entities.add(Coin(o.rectangle.x, o.rectangle.y, { removeEntity(it) }).body)
+        }
 
         //Enemies
         for (o in map.layers[3].objects.getByType(RectangleMapObject::class.java)) {
             entities.add(Enemy(o.rectangle.x, o.rectangle.y, this::removeEntity).body)
         }
 
-        //Plants
+        //Plantsr
         for (o in map.layers[4].objects.getByType(RectangleMapObject::class.java)) {
             entities.add(Plant(o.rectangle.x + o.rectangle.width / 2, o.rectangle.y).body)
         }
@@ -108,7 +110,7 @@ class PlayScreen(private val game: Platformer, private val mapName: String) : Sc
 
         update(delta)
 
-        Gdx.gl.glClearColor(0f, .54f, .77f, 1f)
+        Gdx.gl.glClearColor(.0f, .76f, 1f, 1f)
         Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT or GL20.GL_DEPTH_BUFFER_BIT)
 
         //camera.position.x = hero.body.position.x
@@ -118,6 +120,7 @@ class PlayScreen(private val game: Platformer, private val mapName: String) : Sc
         val lerpY = 22f
         val cameraYOffset = 30
         camera.position.x += (hero.body.position.x - camera.position.x) * lerpX * delta
+        //camera.position.y = 100f
         camera.position.y += (hero.body.position.y - camera.position.y + cameraYOffset) * lerpY * delta
 
         camera.update()
@@ -132,6 +135,10 @@ class PlayScreen(private val game: Platformer, private val mapName: String) : Sc
         for (entity in entities) {
             //EVERYTHING MUST HAVE A TEXTURE TO BE DRAWN! ELSE NullPointerException
             //(entity.userData as? Sprite)?.draw(game.batch)
+
+            (entity.userData as? Coin)?.let {
+                it.draw(game.batch)
+            }
         }
 
         game.batch.end()
