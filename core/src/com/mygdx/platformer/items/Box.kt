@@ -16,13 +16,10 @@ class Box(x: Float, y: Float, width: Int, height: Int) : Sprite() {
     init {
         body.userData = this
 
-        body.onCollisionLeft = { other ->
-            (other as? Entity)?.let { entity ->
-                (entity.userData as? Hero)?.let {
-                    beingPushedFromLeft = true
-                }
-
-                (entity.userData as? Box)?.let {
+        body.onCollisionLeft = { entity ->
+            when (entity?.userData) {
+                is Hero -> beingPushedFromLeft = true
+                is Box -> {
                     body.velocity.x = 0f
                     entity.velocity.x = 0f
                     body.position.x = entity.position.x + entity.width
@@ -30,13 +27,10 @@ class Box(x: Float, y: Float, width: Int, height: Int) : Sprite() {
             }
         }
 
-        body.onCollisionRight = { other ->
-            (other as? Entity)?.let { entity ->
-                (entity.userData as? Hero)?.let {
-                    beingPushedFromRight = true
-                }
-
-                (entity.userData as? Box)?.let {
+        body.onCollisionRight = { entity ->
+            when (entity?.userData) {
+                is Hero -> beingPushedFromRight = true
+                is Box -> {
                     body.velocity.x = 0f
                     entity.velocity.x = 0f
                     body.position.x = entity.position.x - body.width
@@ -44,14 +38,13 @@ class Box(x: Float, y: Float, width: Int, height: Int) : Sprite() {
             }
         }
 
-        body.onCollisionBottom = { other ->
-            (other as? Entity)?.let { entity ->
-                (entity.userData as? Box)?.let {
-                    body.velocity.y = 0f
-                    entity.velocity.y = 0f
-                    body.position.y = entity.position.y + entity.height
-                }
+        body.onCollisionBottom = { entity ->
+            (entity?.userData as? Box)?.let {
+                body.velocity.y = 0f
+                it.body.velocity.y = 0f
+                body.position.y = it.body.position.y + it.body.height
             }
+
         }
 
         body.onUpdate = {

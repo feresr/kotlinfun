@@ -15,9 +15,9 @@ class Entity(val position: Vector2,
 
     var onUpdate: ((Float) -> Unit)? = null
 
-    var onCollision: ((Any?) -> Unit)? = null
-    var onCollisionLeft: ((Any?) -> Unit)? = null
-    var onCollisionRight: ((Any?) -> Unit)? = null
-    var onCollisionBottom: ((Any?) -> Unit)? = null
-    var onCollisionTop: ((Any?) -> Unit)? = null
+    var onCollision: ((Entity?) -> Unit)? = null
+    var onCollisionLeft: ((Entity?) -> Unit)? = null
+    var onCollisionRight: ((Entity?) -> Unit)? = null
+    var onCollisionBottom: ((Entity?) -> Unit)? = null
+    var onCollisionTop: ((Entity?) -> Unit)? = null
 }

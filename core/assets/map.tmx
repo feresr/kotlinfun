@@ -48,4 +48,5 @@
   <object id="59" x="688" y="48" width="16" height="16"/>
   <object id="60" x="160" y="96" width="16" height="16"/>
  </objectgroup>
+ <objectgroup name="Lapses"/>
 </map>

@@ -7,11 +7,13 @@ import com.badlogic.gdx.graphics.g2d.*
 import com.badlogic.gdx.math.Rectangle
 import com.badlogic.gdx.math.Vector2
 import com.mygdx.platformer.enemies.Enemy
+import com.mygdx.platformer.enemies.Immortal
 import com.mygdx.platformer.engine.Entity
 import com.mygdx.platformer.engine.Sensor
 import com.mygdx.platformer.items.Box
 import com.mygdx.platformer.items.Coin
 import com.mygdx.platformer.items.Door
+import com.mygdx.platformer.items.ForgetPlatform
 
 class Hero(x: Float, y: Float, world: (Entity) -> Unit,
            private val onDoorEntered: (Door) -> Unit,
@@ -28,6 +30,9 @@ class Hero(x: Float, y: Float, world: (Entity) -> Unit,
 
     private var timer = 0f
     private var currentTexture: TextureRegion
+    private var insideLapse = false
+
+    fun isInsideLapse(): Boolean = insideLapse
 
     init {
 
@@ -46,29 +51,23 @@ class Hero(x: Float, y: Float, world: (Entity) -> Unit,
 
         currentTexture = idleAnimation.getKeyFrame(0f, true)
 
-        frames = com.badlogic.gdx.utils.Array(6)
+        frames = com.badlogic.gdx.utils.Array(4)
         ta = TextureAtlas("hero_run.pack")
         frames.add(TextureRegion(ta.findRegion("hero_run0")))
         frames.add(TextureRegion(ta.findRegion("hero_run1")))
         frames.add(TextureRegion(ta.findRegion("hero_run2")))
         frames.add(TextureRegion(ta.findRegion("hero_run3")))
-        frames.add(TextureRegion(ta.findRegion("hero_run4")))
-        frames.add(TextureRegion(ta.findRegion("hero_run1")))
         runAnimation = Animation(.125f, frames, Animation.PlayMode.LOOP)
 
 
         body.onCollisionBottom = { other ->
             canJump = true
-
             onHeroStepsOn(other)
-
             other?.let {
-                if (other is Entity) {
-                    when (other.userData) {
-                        is Box -> {
-                            body.velocity.y = 0f
-                            body.position.y = other.position.y + other.height
-                        }
+                when (other.userData) {
+                    is Box, is ForgetPlatform -> {
+                        body.velocity.y = 0f
+                        body.position.y = other.position.y + other.height
                     }
                 }
             }
@@ -76,8 +75,8 @@ class Hero(x: Float, y: Float, world: (Entity) -> Unit,
 
         body.onCollisionLeft = { other ->
             other?.let {
-                when ((other as Entity).userData) {
-                    is Box -> {
+                when (other.userData) {
+                    is Box, is ForgetPlatform -> {
                         body.velocity.x = 0f
                         body.position.x = other.position.x + other.width
                     }
@@ -85,10 +84,23 @@ class Hero(x: Float, y: Float, world: (Entity) -> Unit,
             }
         }
 
+        body.onCollisionTop = { other ->
+            other?.let {
+                when (other.userData) {
+                    is Box, is ForgetPlatform -> {
+                        body.velocity.y = 0f
+                        body.position.y = other.position.y - body.height
+
+                    }
+                    is Immortal -> { kill() }
+                }
+            }
+        }
+
         body.onCollisionRight = { other ->
             other?.let {
-                when ((other as Entity).userData) {
-                    is Box -> {
+                when (other.userData) {
+                    is Box, is ForgetPlatform -> {
                         body.velocity.x = 0f
                         body.position.x = other.position.x - body.width
                     }
@@ -97,7 +109,7 @@ class Hero(x: Float, y: Float, world: (Entity) -> Unit,
         }
 
         body.onCollision = { other ->
-            ((other as? Entity)?.userData as? Coin)?.collect()
+            (other?.userData as? Coin)?.collect()
         }
 
         body.userData = this
@@ -120,7 +132,8 @@ class Hero(x: Float, y: Float, world: (Entity) -> Unit,
 
     private fun update(delta: Float) {
         //body.linearVelocity = vector.set(0f, body.linearVelocity.y)
-
+        insideLapse = false
+        body.gravity = 1f
         timer += delta
 
         if (Gdx.input.isKeyJustPressed(Input.Keys.SPACE) && timer > .1f) {
@@ -201,17 +214,17 @@ class Hero(x: Float, y: Float, world: (Entity) -> Unit,
     }
 
     fun kill() {
-        onKilled()
+        if (!insideLapse) {
+            onKilled()
+        }
     }
 
-    private fun onBodySensor(entity: Any?) {
-        (entity as? Entity)?.let {
-            it.userData?.let {
-                when (it) {
-                    is Door -> {
-                        if (Gdx.input.isKeyJustPressed(Input.Keys.DOWN)) { //JUMP
-                            onDoorEntered(it)
-                        }
+    private fun onBodySensor(entity: Entity) {
+        entity.userData?.let {
+            when (it) {
+                is Door -> {
+                    if (Gdx.input.isKeyJustPressed(Input.Keys.DOWN)) { //JUMP
+                        onDoorEntered(it)
                     }
                 }
             }
@@ -226,7 +239,11 @@ class Hero(x: Float, y: Float, world: (Entity) -> Unit,
     }
 
     companion object {
-        const val SPEED = 1.5f
+        const val SPEED = 2f
         const val JUMP_SPEED = 7f
+    }
+
+    fun onEnterLapse() {
+        insideLapse = true
     }
 }

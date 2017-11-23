@@ -14,7 +14,6 @@ class World(private val tiles: TiledMapTileLayer, private val gravity: Float) {
     private val shapeRenderer: ShapeRenderer by lazy { ShapeRenderer() }
     private val entities: ArrayList<Entity> = ArrayList()
 
-
     fun addEntity(entity: Entity) {
         entities.add(entity)
     }
@@ -129,19 +128,8 @@ class World(private val tiles: TiledMapTileLayer, private val gravity: Float) {
         entity.position.y = entity.position.y + entity.velocity.y
     }
 
-
     fun step(delta: Float) {
         Gdx.app.log("World", "Items ${entities.size}")
-        //Tiles collisions
-        for (entity in entities) {
-
-            if (entity.velocity.y > -MAX_FALL_SPEED) {
-                entity.velocity.y -= entity.gravity * gravity
-            }
-            if (entity.velocity.x != 0f) stepX(entity)
-            if (entity.velocity.y != 0f) stepY(entity)
-
-        }
 
         //Triggers
         //the order of the collisions matters here, it is recommended for the player
@@ -156,6 +144,17 @@ class World(private val tiles: TiledMapTileLayer, private val gravity: Float) {
                             .forEach { checkCollisions(entity, it) }
                 }
 
+        //Tiles collisions
+        for (entity in entities) {
+
+            if (entity.velocity.y > -MAX_FALL_SPEED) {
+                entity.velocity.y -= entity.gravity * gravity
+            }
+            if (entity.velocity.x != 0f) stepX(entity)
+            if (entity.velocity.y != 0f) stepY(entity)
+
+        }
+
         //AABB collisions
         entities.asSequence()
                 .filter { (it.velocity.len2() > 0f) }
@@ -163,11 +162,11 @@ class World(private val tiles: TiledMapTileLayer, private val gravity: Float) {
                     entities.asSequence()
                             .filter { other -> other != entity }
                             .forEach { other ->
-                                val A = Rectangle(entity.position.x, entity.position.y, entity.width.toFloat(), entity.height.toFloat())
-                                val B = Rectangle(other.position.x, other.position.y, other.width.toFloat(), other.height.toFloat())
+                                val A = Rectangle(entity.position.x + entity.velocity.x, entity.position.y + entity.velocity.y, entity.width.toFloat(), entity.height.toFloat())
+                                val B = Rectangle(other.position.x + other.velocity.x, other.position.y + other.velocity.y, other.width.toFloat(), other.height.toFloat())
 
-                                val w = .5 * (A.width + B.width)
-                                val h = .5 * (A.height + B.height)
+                                val w = (A.width + B.width) / 2f
+                                val h = (A.height + B.height) / 2f
                                 val dx = (A.x + A.width / 2f) - (B.x + B.width / 2f)
                                 val dy = (A.y + A.height / 2f) - (B.y + B.height / 2f)
 
@@ -209,14 +208,14 @@ class World(private val tiles: TiledMapTileLayer, private val gravity: Float) {
     }
 
     private fun checkCollisions(entity: Entity, other: Entity) {
-        if (entity.position.dst(other.position) < TILE_SIZE * 5) {
-            val rec2 = Rectangle(other.position.x, other.position.y, other.width.toFloat(), other.height.toFloat())
-            for (sensor in entity.sensors) {
-                if (rec2.overlaps(Rectangle(entity.position.x + sensor.rectangle.x, entity.position.y + sensor.rectangle.y, sensor.rectangle.width, sensor.rectangle.height))) {
-                    sensor.f(other)
-                }
+
+        val rec2 = Rectangle(other.position.x, other.position.y, other.width.toFloat(), other.height.toFloat())
+        for (sensor in entity.sensors) {
+            if (rec2.overlaps(Rectangle(entity.position.x + sensor.rectangle.x, entity.position.y + sensor.rectangle.y, sensor.rectangle.width, sensor.rectangle.height))) {
+                sensor.f(other)
             }
         }
+
     }
 
     fun render(pm: Matrix4) {
@@ -227,14 +226,14 @@ class World(private val tiles: TiledMapTileLayer, private val gravity: Float) {
 
             if (!entity.isVisible) continue
 
-            shapeRenderer.setColor(1f, 0f, 0f, 1f);
+            shapeRenderer.setColor(1f, 0f, 0f, 1f)
             shapeRenderer.rect(entity.position.x,
                     entity.position.y,
                     entity.width.toFloat(),
                     entity.height.toFloat())
-            shapeRenderer.setColor(0f, 1f, 0f, 1f);
+            shapeRenderer.setColor(0f, 1f, 0f, 1f)
             for (sensor in entity.sensors) {
-                shapeRenderer.rect(entity.position.x + sensor.rectangle.x, entity.position.y + sensor.rectangle.y, sensor.rectangle.width.toFloat(), sensor.rectangle.height.toFloat())
+                shapeRenderer.rect(entity.position.x + sensor.rectangle.x, entity.position.y + sensor.rectangle.y, sensor.rectangle.width, sensor.rectangle.height)
             }
         }
         shapeRenderer.end()

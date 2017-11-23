@@ -4,6 +4,7 @@ import com.badlogic.gdx.Gdx
 import com.badlogic.gdx.Screen
 import com.badlogic.gdx.graphics.GL20
 import com.badlogic.gdx.graphics.OrthographicCamera
+import com.badlogic.gdx.graphics.glutils.ShaderProgram
 import com.badlogic.gdx.maps.objects.RectangleMapObject
 import com.badlogic.gdx.maps.tiled.TiledMapTileLayer
 import com.badlogic.gdx.maps.tiled.TmxMapLoader
@@ -17,6 +18,7 @@ import com.mygdx.platformer.engine.World
 import com.mygdx.platformer.items.Box
 import com.mygdx.platformer.items.Coin
 import com.mygdx.platformer.items.Door
+import com.mygdx.platformer.items.Lapse
 
 /**
  * Created by feresr on 11/11/17.
@@ -32,24 +34,39 @@ class PlayScreen(private val game: Platformer, private val mapName: String) : Sc
     private val map = TmxMapLoader().load(mapName)
     private val renderer = OrthogonalTiledMapRenderer(map, game.batch)
 
-    private val world: World = World(map.layers[1] as TiledMapTileLayer, .5f)
+    private val world: World = World(map.layers[1] as TiledMapTileLayer, .4f)
 
     private val hero: Hero = Hero(128f, 256f, { world.addEntity(it) }, this::onDoorSelected, { isHeroDead = true })
 
     private val entities: Array<Entity> = Array()
+    private val shader: ShaderProgram = ShaderProgram(Gdx.files.internal("shaders/vignette.vsh"), Gdx.files.internal("shaders/vignette.fsh"))
 
     override fun show() {
         createWorldObjects()
         camera.position.y = viewport.worldHeight / 2f
-        camera.zoom = .7f
+        camera.zoom = 1f
+        ShaderProgram.pedantic = false
+        renderer.batch.shader = shader
     }
 
     private fun removeEntity(entity: Entity) {
         world.removeEntity(entity)
+        if (renderer.batch.shader == shader) {
+            renderer.batch.shader = null
+        } else {
+            renderer.batch.shader = shader
+        }
         entities.removeValue(entity, true)
     }
 
     private fun createWorldObjects() {
+
+        //entities.add(ForgetPlatform(200f, 94f, 200, 100).body)
+        //entities.add(Immortal(200f, 94f, { removeEntity(it) }).body)
+
+        for (o in map.layers[8].objects.getByType(RectangleMapObject::class.java)) {
+            entities.add(Lapse(o.rectangle.x, o.rectangle.y, o.rectangle.width, o.rectangle.height).body)
+        }
 
         for (o in map.layers[7].objects.getByType(RectangleMapObject::class.java)) {
             entities.add(Coin(o.rectangle.x, o.rectangle.y, { removeEntity(it) }).body)
@@ -67,7 +84,7 @@ class PlayScreen(private val game: Platformer, private val mapName: String) : Sc
 
         //Doors
         for (o in map.layers[5].objects.getByType(RectangleMapObject::class.java)) {
-            entities.add(Door(o.rectangle.x, o.rectangle.y, o.properties["level"].toString()).body)
+            entities.add(Door(o.rectangle.x, o.rectangle.y, o.rectangle.width.toInt(), o.rectangle.height.toInt(), o.properties["level"].toString()).body)
         }
 
         //Boxes
@@ -110,15 +127,16 @@ class PlayScreen(private val game: Platformer, private val mapName: String) : Sc
 
         update(delta)
 
-        Gdx.gl.glClearColor(.0f, .76f, 1f, 1f)
+        Gdx.gl.glClearColor(.26f, .82f, .98f, 1f)
+
         Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT or GL20.GL_DEPTH_BUFFER_BIT)
 
         //camera.position.x = hero.body.position.x
-        //camera.position.y = hero.body.position.y + 80
+        //camera.position.y = hero.body.position.y + 20
 
         val lerpX = 20f
-        val lerpY = 22f
-        val cameraYOffset = 30
+        val lerpY = 2f
+        val cameraYOffset = 20
         camera.position.x += (hero.body.position.x - camera.position.x) * lerpX * delta
         //camera.position.y = 100f
         camera.position.y += (hero.body.position.y - camera.position.y + cameraYOffset) * lerpY * delta
@@ -131,7 +149,12 @@ class PlayScreen(private val game: Platformer, private val mapName: String) : Sc
         renderer.render()
 
         game.batch.begin()
-        hero.draw(game.batch)
+
+        if (hero.isInsideLapse()) {
+            renderer.batch.shader = shader
+        } else {
+            renderer.batch.shader = null
+        }
         for (entity in entities) {
             //EVERYTHING MUST HAVE A TEXTURE TO BE DRAWN! ELSE NullPointerException
             //(entity.userData as? Sprite)?.draw(game.batch)
@@ -139,7 +162,12 @@ class PlayScreen(private val game: Platformer, private val mapName: String) : Sc
             (entity.userData as? Coin)?.let {
                 it.draw(game.batch)
             }
+            (entity.userData as? Lapse)?.let {
+                it.draw(game.batch)
+            }
         }
+
+        hero.draw(game.batch)
 
         game.batch.end()
 
@@ -153,6 +181,9 @@ class PlayScreen(private val game: Platformer, private val mapName: String) : Sc
 
     override fun resize(width: Int, height: Int) {
         viewport.update(width, height)
+        shader.begin();
+        shader.setUniformf("u_resolution", width.toFloat(), height.toFloat())
+        shader.end();
     }
 
     override fun dispose() {

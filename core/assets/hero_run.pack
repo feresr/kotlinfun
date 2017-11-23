@@ -1,5 +1,5 @@
 hero_run.png
-size: 75, 23
+size: 49, 23
 format: RGBA8888
 filter: MipMapLinearNearest,Nearest
 repeat: none
@@ -13,35 +13,21 @@ hero_run0
 hero_run1
   rotate: false
   xy: 13, 0
-  size: 13, 23
-  orig: 13, 23
-  offset: 0, 0
-  index: -1
-hero_run2
-  rotate: false
-  xy: 26, 0
-  size: 12, 23
-  orig: 13, 23
-  offset: 1, 0
-  index: -1
-hero_run3
-  rotate: false
-  xy: 38, 0
-  size: 13, 23
-  orig: 13, 23
-  offset: 0, 0
-  index: -1
-hero_run4
-  rotate: false
-  xy: 51, 0
   size: 11, 23
   orig: 13, 23
   offset: 2, 0
   index: -1
-hero_run5
+hero_run2
   rotate: false
-  xy: 62, 0
+  xy: 24, 0
   size: 13, 23
   orig: 13, 23
   offset: 0, 0
+  index: -1
+hero_run3
+  rotate: false
+  xy: 37, 0
+  size: 12, 23
+  orig: 13, 23
+  offset: 1, 0
   index: -1

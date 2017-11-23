@@ -7,19 +7,18 @@ import com.mygdx.platformer.engine.Entity
 import com.mygdx.platformer.items.Coin
 import com.mygdx.platformer.items.Lapse
 
-class Enemy(x: Float,
-            y: Float,
-            onKilled: (Entity) -> Unit) : Sprite() {
+class Immortal(x: Float,
+               y: Float,
+               onKilled: (Entity) -> Unit) : Sprite() {
 
     val body: Entity
-    var isDead: Boolean = false
-    private val size = 16
+    private val size = 20
 
     init {
         body = Entity(Vector2(x, y), size, size)
         body.velocity.x = -INITIAL_VELOCITY
 
-        body.onUpdate = { if (isDead || body.position.y < 0) onKilled(body) }
+        body.onUpdate = { if (body.position.y < 0) onKilled(body) }
 
         body.onCollisionLeft = { other ->
             val ud = other?.userData
@@ -49,11 +48,8 @@ class Enemy(x: Float,
         body.userData = this
     }
 
-    fun die() {
-        isDead = true
-    }
 
     companion object {
-        const val INITIAL_VELOCITY = .8f
+        const val INITIAL_VELOCITY = .5f
     }
 }
